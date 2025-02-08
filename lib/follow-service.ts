@@ -1,6 +1,32 @@
 import { getSelf } from "./auth-service";
 import { db } from "./db";
 
+export const getFollowedUsers = async () => {
+  try {
+    const self = await getSelf();
+
+    const followedUsers = db.follow.findMany({
+      where: {
+        followerId: self.id,
+        following: {
+          blocking: {
+            none: {
+              blockedId: self.id,
+            },
+          },
+        },
+      },
+      include: {
+        following: true,
+      },
+    });
+
+    return followedUsers;
+  } catch {
+    return [];
+  }
+};
+
 export const isFollowingUser = async (id: string) => {
   try {
     const self = await getSelf();
@@ -10,17 +36,19 @@ export const isFollowingUser = async (id: string) => {
     });
 
     if (!otherUser) {
-      throw new Error("Adventurer not found");
+      throw new Error("Adventurer not found...");
     }
 
     if (otherUser.id === self.id) {
       return true;
     }
 
-    const existingFollow = await db.follow.findFirst({
+    const existingFollow = await db.follow.findUnique({
       where: {
-        followerId: self.id,
-        followingId: otherUser.id,
+        followerId_followingId: {
+          followerId: self.id,
+          followingId: otherUser.id,
+        },
       },
     });
 
@@ -38,17 +66,19 @@ export const followUser = async (id: string) => {
   });
 
   if (!otherUser) {
-    throw new Error("Adventurer not found");
+    throw new Error("Adventurer not found...");
   }
 
   if (otherUser.id === self.id) {
     throw new Error("You're already in this Quest Party! Psst, you lead it!");
   }
 
-  const existingFollow = await db.follow.findFirst({
+  const existingFollow = await db.follow.findUnique({
     where: {
-      followerId: self.id,
-      followingId: otherUser.id,
+      followerId_followingId: {
+        followerId: self.id,
+        followingId: otherUser.id,
+      },
     },
   });
 
@@ -78,17 +108,19 @@ export const unfollowUser = async (id: string) => {
   });
 
   if (!otherUser) {
-    throw new Error("Adventurer not found");
+    throw new Error("Adventurer not found...");
   }
 
   if (otherUser.id === self.id) {
     throw new Error("You can't quit your own Quest Party!");
   }
 
-  const existingFollow = await db.follow.findFirst({
+  const existingFollow = await db.follow.findUnique({
     where: {
-      followerId: self.id,
-      followingId: otherUser.id,
+      followerId_followingId: {
+        followerId: self.id,
+        followingId: otherUser.id,
+      },
     },
   });
 
@@ -106,4 +138,4 @@ export const unfollowUser = async (id: string) => {
   });
 
   return follow;
-}
+};

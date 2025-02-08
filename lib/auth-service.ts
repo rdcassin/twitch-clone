@@ -6,7 +6,7 @@ export const getSelf = async () => {
   const self = await currentUser();
 
   if (!self || !self.username) {
-    throw new Error("Unauthorized Access");
+    throw new Error("Unauthorized Access...");
   }
 
   const user = await db.user.findUnique({
@@ -14,7 +14,29 @@ export const getSelf = async () => {
   });
 
   if (!user) {
-    throw new Error("Adventurer Not Found");
+    throw new Error("Adventurer Not Found...");
+  }
+
+  return user;
+};
+
+export const getSelfByUsername = async (username: string) => {
+  const self = await currentUser();
+
+  if (!self || !self.username) {
+    throw new Error("Unauthorized Access...");
+  }
+
+  const user = await db.user.findUnique({
+    where: { username },
+  });
+
+  if (!user) {
+    throw new Error("Adventurer Not Found...");
+  }
+
+  if (self.username !== user.username) {
+    throw new Error("Unauthorized Access...");
   }
 
   return user;
